@@ -2,6 +2,7 @@ mod hmap;
 mod map;
 
 use crate::{Backend, RespArray, RespError, RespFrame, SimpleString};
+use enum_dispatch::enum_dispatch;
 use lazy_static::lazy_static;
 use thiserror::Error;
 
@@ -22,10 +23,12 @@ pub enum CommandError {
     Utf8Error(#[from] std::string::FromUtf8Error),
 }
 
+#[enum_dispatch]
 pub trait CommandExecutor {
     fn execute(self, backend: &Backend) -> RespFrame;
 }
 
+#[enum_dispatch(CommandExecutor)]
 pub enum Command {
     Get(Get),
     Set(Set),
@@ -34,7 +37,6 @@ pub enum Command {
     HGetAll(HGetAll),
 }
 
-#[derive(Debug)]
 pub struct Get {
     key: String,
 }
@@ -63,7 +65,31 @@ pub struct HGetAll {
     key: String,
 }
 
-//
+#[derive(Debug)]
+pub struct Unrecognized;
+
+impl TryFrom<RespArray> for Command {
+    type Error = CommandError;
+    fn try_from(v: RespArray) -> Result<Self, Self::Error> {
+        match v.first() {
+            Some(RespFrame::BulkString(cmd)) => match cmd.as_ref() {
+                b"get" => Ok(Get::try_from(v)?.into()),
+                b"set" => Ok(Set::try_from(v)?.into()),
+                b"hget" => Ok(HGet::try_from(v)?.into()),
+                b"hset" => Ok(HSet::try_from(v)?.into()),
+                b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
+                _ => Err(CommandError::InvalidCommand(format!(
+                    "Invalid command: {}",
+                    String::from_utf8_lossy(cmd.as_ref())
+                ))),
+            },
+            _ => Err(CommandError::InvalidCommand(
+                "Command must have a BulkString as the first argument".to_string(),
+            )),
+        }
+    }
+}
+
 fn validate_command(
     value: &RespArray,
     names: &[&'static str],

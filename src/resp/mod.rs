@@ -99,6 +99,7 @@ pub struct RespSet(pub(crate) Vec<RespFrame>);
 
 impl Deref for SimpleString {
     type Target = String;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -106,6 +107,7 @@ impl Deref for SimpleString {
 
 impl Deref for SimpleError {
     type Target = String;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -113,6 +115,7 @@ impl Deref for SimpleError {
 
 impl Deref for BulkString {
     type Target = Vec<u8>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -120,6 +123,7 @@ impl Deref for BulkString {
 
 impl Deref for RespArray {
     type Target = Vec<RespFrame>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -127,10 +131,12 @@ impl Deref for RespArray {
 
 impl Deref for RespMap {
     type Target = BTreeMap<String, RespFrame>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
+
 impl DerefMut for RespMap {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
@@ -139,6 +145,7 @@ impl DerefMut for RespMap {
 
 impl Deref for RespSet {
     type Target = Vec<RespFrame>;
+
     fn deref(&self) -> &Self::Target {
         &self.0
     }
@@ -146,43 +153,43 @@ impl Deref for RespSet {
 
 impl SimpleString {
     pub fn new(s: impl Into<String>) -> Self {
-        Self(s.into())
+        SimpleString(s.into())
     }
 }
 
 impl SimpleError {
     pub fn new(s: impl Into<String>) -> Self {
-        Self(s.into())
+        SimpleError(s.into())
     }
 }
 
 impl BulkString {
-    pub fn new(v: impl Into<Vec<u8>>) -> Self {
-        Self(v.into())
+    pub fn new(s: impl Into<Vec<u8>>) -> Self {
+        BulkString(s.into())
     }
 }
 
 impl RespArray {
-    pub fn new(v: impl Into<Vec<RespFrame>>) -> Self {
-        Self(v.into())
+    pub fn new(s: impl Into<Vec<RespFrame>>) -> Self {
+        RespArray(s.into())
     }
 }
 
 impl RespMap {
     pub fn new() -> Self {
-        Self(BTreeMap::new())
+        RespMap(BTreeMap::new())
+    }
+}
+
+impl Default for RespMap {
+    fn default() -> Self {
+        RespMap::new()
     }
 }
 
 impl RespSet {
     pub fn new(s: impl Into<Vec<RespFrame>>) -> Self {
         RespSet(s.into())
-    }
-}
-
-impl Default for RespMap {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
